@@ -1,6 +1,6 @@
 import { render, act } from '@testing-library/react';
 import * as historyHelper from 'history';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { defaultRegistry } from 'react-sweet-state';
 
 import { Router } from '../../controllers';
@@ -223,6 +223,31 @@ describe('useQueryParam()', () => {
 
     expect(qpVal).toEqual(undefined);
     expect(historyPushSpy).toBeCalledWith(`${mockPath}?bar=world#hash`);
+  });
+
+  it('should update URL to include multiple changes', async () => {
+    const mockPath = mockLocation.pathname;
+
+    render(
+      <Router history={history} routes={mockRoutes} plugins={[]}>
+        <MockComponent>
+          {() => {
+            const [, setParam1] = useQueryParam('foo');
+            const [, setParam2] = useQueryParam('bar');
+
+            useEffect(() => {
+              setParam1(undefined);
+              setParam2(undefined);
+            }, [setParam1, setParam2]);
+
+            return null;
+          }}
+        </MockComponent>
+      </Router>
+    );
+
+    expect(historyReplaceSpy).not.toHaveBeenCalled();
+    expect(historyPushSpy).toBeCalledWith(`${mockPath}#hash`);
   });
 
   it('should only re-render components hooked to a specific param', async () => {
